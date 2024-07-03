@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  yas       Int?
+  date      Date[]
+  answers   Answer[]
+}
+
+model Task {
+  id          Int      @id @default(autoincrement()) 
+  taskName    String   @unique
+  desc        String
+  startDate   DateTime 
+  endDate     DateTime
+  completed   Boolean
+
+  dateNow     Date     @relation(fields: [dateId], references: [id])
+  dateId      Int      @unique
+
+  emoji      Emoji[]
+  category   Category[]
+  degree     Degree[]
+}
+
+model Date {
+  id        Int      @id @default(autoincrement())
+  now       DateTime @default(now())
+
+  user      User?     @relation(fields: [userId], references: [id])
+  userId    Int?
+
+  task  Task[]
+
+}
+
+model Emoji {
+  id          Int      @id @default(autoincrement()) 
+  type        String
+
+  tasks       Task     @relation(fields: [taskId], references: [id])
+  taskId      Int      @unique
+}
+
+model Category {
+  id        Int      @id @default(autoincrement()) 
+  name      String
+
+  tasks     Task     @relation(fields: [taskId], references: [id])
+  taskId    Int      @unique
+}
+
+model Degree {
+  id        Int      @id @default(autoincrement()) 
+  type      String
+
+  tasks     Task     @relation(fields: [taskId], references: [id])
+  taskId    Int      @unique
+}
+
+
+model Poll {
+  id        Int        @id @default(autoincrement())
+  title     String
+  questions Question[]
+}
+
+model Question {
+  id        Int        @id @default(autoincrement())
+  text      String
+  poll      Poll       @relation(fields: [pollId], references: [id])
+  pollId    Int
+  answers   Answer[]
+}
+
+model Answer {
+  id           Int      @id @default(autoincrement())
+  text         String
+  question     Question @relation(fields: [questionId], references: [id])
+  questionId   Int
+  user         User?     @relation(fields: [userId], references: [id])
+  userId       Int?
+}
+
+model Mod {
+  id          Int      @id @default(autoincrement()) 
+  type        String
+}
