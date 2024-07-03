@@ -1,55 +1,62 @@
-import { Injectable } from '@nestjs/common';
+import { ConsoleLogger, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
+import * as bcrypt from 'bcryptjs';
+import { CreateUserDto } from './dto/create-user.dto';
+import { PasswordService } from 'src/auth/services/password.service';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(()=>PasswordService))
+    private passwordService: PasswordService,
+  ) {}
 
-  async createUser(data: { email: string; password: string; name: string; yas?: number; dates?: { now: Date }[]; answers?: { text: string; questionId: number }[] }) {
-    return this.prisma.user.create({
+  async createUser(data: CreateUserDto ) {
+    const encryptedPass = await this.passwordService.hashPassword(
+      data.password,
+    );
+    const {password, ...user} = await this.prisma.user.create({
       data: {
-        email: data.email,
-        password: data.password,
-        name: data.name,
-        yas: data.yas,
-        date: data.dates ? { create: data.dates } : undefined,
-        answers: data.answers ? { create: data.answers } : undefined,
+        ...data,
+        password: encryptedPass,
+        date: {
+          create: data.date?.map(date => ({ now: date.now })) || [],
+        },
+        answers: {
+          create: data.answers?.map(answer => ({
+            text: answer.text,
+            questionId: answer.questionId,
+          })) || [],
+        },
       },
-      include: { date: true, answers: true },
+      include: {
+        date: true,
+        answers: true,
+      },
     });
+    return user;
   }
 
-  async getUsers() {
-    return this.prisma.user.findMany({
-      include: { date: true, answers: true },
+  async findUserByEmail(email:string) {
+    const user = await this.prisma.user.findUnique({
+      where: {email},
     });
+    if(!user){
+      throw new NotFoundException();
+    }
+    return user;
   }
 
-  async getUserById(id: number) {
+  async findOneUser(id:number){
     return this.prisma.user.findUnique({
-      where: { id },
-      include: { date: true, answers: true },
-    });
+      where:{id},
+    })
   }
 
-  async updateUser(id: number, data: { email?: string; password?: string; name?: string; yas?: number; dates?: { now: Date }[]; answers?: { text: string; questionId: number }[] }) {
-    return this.prisma.user.update({
-      where: { id },
-      data: {
-        email: data.email,
-        password: data.password,
-        name: data.name,
-        yas: data.yas,
-        date: data.dates ? { create: data.dates } : undefined,
-        answers: data.answers ? { create: data.answers } : undefined,
-      },
-      include: { date: true, answers: true },
-    });
-  }
-
-  async deleteUser(id: number) {
+  async deleteUser(id:number){
     return this.prisma.user.delete({
-      where: { id },
-    });
+      where:{id},
+    })
   }
 }

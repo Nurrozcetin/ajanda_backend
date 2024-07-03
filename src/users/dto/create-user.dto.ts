@@ -4,4 +4,6 @@ export class CreateUserDto{
     password: string;
     name: string;
     age: number;
+    date?: {now:Date}[];
+    answers?: { text: string; questionId: number }[]
 }
