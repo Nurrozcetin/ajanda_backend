@@ -1,6 +1,5 @@
 import { Inject, Injectable, forwardRef } from "@nestjs/common";
-import { compare, genSalt } from "bcryptjs";
-import { hash } from "crypto";
+import { compare, genSalt, hash } from "bcryptjs";
 import { UserService } from "src/users/users.service";
 
 @Injectable()
@@ -10,15 +9,15 @@ export class PasswordService {
         private userService: UserService,
     ){}
 
-    async hashPassword(password:string){
-        const salt = await genSalt(10); //hashleme maliyeti
+    async hashPassword(password: string): Promise<string> {
+        const salt = await genSalt(10);
         return hash(password, salt);
     }
 
     async compare(
-        proviced: string,
+        provided: string,
         stored: string,
-    ):Promise<boolean>{
-        return compare(proviced, stored);
+    ): Promise<boolean> {
+        return compare(provided, stored);
     }
 }

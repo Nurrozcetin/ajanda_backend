@@ -1,5 +1,4 @@
 export interface IPayload {
-    sub: string;
+    sub: number;
     email: string;
-    password: string;
   }

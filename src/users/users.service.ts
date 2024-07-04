@@ -1,6 +1,5 @@
 import { ConsoleLogger, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PasswordService } from 'src/auth/services/password.service';
 
@@ -38,6 +37,10 @@ export class UserService {
     return user;
   }
 
+  async getAll(){
+    return this.prisma.user.findMany();
+  }
+  
   async findUserByEmail(email:string) {
     const user = await this.prisma.user.findUnique({
       where: {email},
